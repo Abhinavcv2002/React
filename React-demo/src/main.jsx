@@ -5,6 +5,6 @@ import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App age="21" />
+    <App age="22" />
   </StrictMode>,
 )
