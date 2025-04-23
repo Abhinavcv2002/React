@@ -1,45 +1,72 @@
-import React,{useState,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import Nav from "./Nav";
-import axios from 'axios'
+import axios from "axios";
 
 export default function Home() {
-    const [task,setTask]=useState([])
-    const [editing,setEditing]=useState([])
-    const [currenetTask,setcurrenetTask]=useState({id:null,title:'',description:'',completed:false})
-    // console.log(task);
+    const [tasks, setTasks] = useState([]);
+    const [editing, setEditing] = useState(false);
+    const [currentTask, setCurrentTask] = useState({
+        id: null,
+        title: '',
+        description: '',
+        completed: false
+    });
+
     useEffect(() => {
         axios.get('http://127.0.0.1:8000/api/tasks/')
-         .then(response => setTask(response.data))
-         .catch(error => console.log(error));
+            .then(response => setTasks(response.data))
+            .catch(error => console.log(error));
     }, []);
-    console.log(task)
 
-    const editTask = (task)=>{
-        
-    }
+    const editTask = (task) => {
+        setEditing(true);
+        setCurrentTask(task);
+    };
+
+    const updateTask = (id, updatedTask) => {
+        axios.put(`http://127.0.0.1:8000/api/tasks/${id}/`, updatedTask)
+            .then(response => {
+                setTasks(tasks.map(t => (t.id === id ? response.data : t)));
+                setEditing(false);
+            })
+            .catch(error => console.log(error));
+    };
+
+
 
     return (
         <div>
             <Nav />
-            <h1>Todos</h1>
-            {editing ? <editTaskfrom currenetTask = {currenetTask}/> : null }
+                
+            <h1>Todo</h1>
+            {editing && (
+                <EditTASKForm
+                    currentTask={currentTask}
+                    updateTask={updateTask}
+                />
+            )}
             <table className="table">
-                <thead><tr>
-                <th>id</th>
-                <th>title</th>
-                <th>description</th>
-                <th>status</th>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>title</th>
+                        <th>description</th>
+                        <th>status</th>
+                        <th>actions</th>
+                    </tr>
                 </thead>
                 <tbody>
-                    {task.map((todo)=>(
+                    {tasks.map((todo) => (
                         <tr key={todo.id}>
                             <td>{todo.id}</td>
                             <td>{todo.title}</td>
                             <td>{todo.description}</td>
                             <td>{todo.completed ? 'Completed' : 'Not completed'}</td>
-                            <td><button> onClick={()=>editTask(todo)}Edit</button></td>
-                            <td><button>Delete</button></td>
+                            <td>
+                                <button onClick={() => editTask(todo)}>Edit</button>
+                                {/* Placeholder for delete button */}
+                                <button>Delete</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
@@ -48,18 +75,47 @@ export default function Home() {
     );
 }
 
-const EditTaskfrom = (currenetTask) =>{
-    const [task,setTask] = useState(currenetTask)
-    console.log(task);
+// Reusable form component for editing
+const EditTASKForm = ({ currentTask, updateTask }) => {
+    const [task, setTask] = useState(currentTask);
 
-    return(
+    useEffect(() => {
+        setTask(currentTask);
+    }, [currentTask]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setTask({ ...task, [name]: value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        updateTask(task.id, task);
+    };
+
+    return (
         <div>
-            <form action="">
-                Title<input type="text" id='' className='form-control'/>
-                Description<input type="text" id='' className='form-control'/>
-                
+            <h2>Edit Task</h2>
+            <form onSubmit={handleSubmit}>
+                Title
+                <input
+                    type="text"
+                    name="title"
+                    value={task.title}
+                    onChange={handleChange}
+                    className="form-control"
+                />
+                Description
+                <input
+                    type="text"
+                    name="description"
+                    value={task.description}
+                    onChange={handleChange}
+                    className="form-control"
+                />
+                <button type="submit" className="btn btn-success">Update</button>
+                <button ></button>
             </form>
         </div>
-    )
-    
-}
+    );
+};
